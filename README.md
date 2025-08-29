@@ -15,7 +15,7 @@ Export to Word: Create a professional, formatted .docx report of the final resul
 
 
 Installation and First-Time Setup Guide 🚀
-This guide will walk you through every single step to get the application running. No prior coding experience is needed! We'll go slow and explain everything.
+This guide will walk you through every single step to get the application running. No prior coding experience is needed! We'll go slow and explain everything as if you have nearly no computer literacy.
 
 
 
@@ -40,9 +40,10 @@ Click "Install Now" and follow the on-screen instructions to complete the instal
 
 
 Step 2: Download the Application Files
-Now you need to extract the files for the Score Calculator itself.
+<img width="920" height="419" alt="image" src="https://github.com/user-attachments/assets/c35568eb-149a-417a-b7fb-8cb95c62d44e" />
+Now you need to install the files for the Score Calculator itself.
 Create a new folder somewhere you can easily find it, like your Desktop. Name it something like ScoreApp.
-Extract all 4 files you just downloaded into that folder.
+Copy / move all of the files you just downloaded into that folder (check image for download button location).
 
 
 
@@ -110,3 +111,4 @@ At the bottom of the report, you can click 📄 Export to Word to save a beautif
 Saving Your Work
 
 Don't forget to save your whole competition! Use File > Save Competition As... to save a .json file that contains all your settings and submissions. You can open it again later using File > Load Competition....
+
