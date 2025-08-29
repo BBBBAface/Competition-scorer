@@ -2,10 +2,15 @@
 This is a simple application designed to help you manage and score any kind of competition, from a science fair to a bake-off. You can create categories, weigh them differently, and automatically calculate final scores for all your submissions.
 
 Easy Data Entry: Add or edit submissions in a simple form.
+
 Custom Scoring Rules: Define your own scoring categories, set custom weights, and even apply a "curve" to the scores.
+
 Advanced Calculations: Apply pre-calculation functions like "Square Root," "Z-Score," or "Rank Order" to scores before they are finalized.
+
 Save & Load: Save your entire competition (settings and all submissions) to a file and load it back up later.
+
 Generate Reports: Instantly generate a final leaderboard and see category winners.
+
 Export to Word: Create a professional, formatted .docx report of the final results with a single click. Includes customizable graph.
 
 
@@ -13,16 +18,21 @@ Export to Word: Create a professional, formatted .docx report of the final resul
 
 
 
+
 Installation and First-Time Setup Guide 
+
 This guide will walk you through every single step to get the application running. No prior coding experience is needed! We'll go slow and explain everything as if you have nearly no computer literacy.
 
 
 
 Step 1: Install Python on Your Computer
+
 The Score Calculator is written in a language called Python. To run it, you first need to have Python installed on your computer.
 
 How to Check if You Already Have Python:
+
 Open the command line tool:
+
 On Windows: Press the Windows Key (the one with the logo), type cmd, and press Enter. A black window called "Command Prompt" will open.
 On Mac: Open your "Applications" folder, then open the "Utilities" folder. Double-click on "Terminal".
 Type the following command into the black window and press Enter: "python --version"
@@ -30,6 +40,7 @@ If you see text that says something like Python 3.8.10 (any number starting with
 If you see an error message like "command not found" or the version number starts with a 2, you need to install Python.
 
 How to Install Python:
+
 Go to the official Python download page: https://www.python.org/downloads/
 Click the big yellow button to download the latest version for your operating system (Windows or Mac).
 Run the installer you just downloaded.
@@ -39,6 +50,7 @@ Click "Install Now" and follow the on-screen instructions to complete the instal
 
 
 Step 2: Download the Application Files
+
 <img width="920" height="419" alt="image" src="https://github.com/user-attachments/assets/c35568eb-149a-417a-b7fb-8cb95c62d44e" />
 Now you need to install the files for the Score Calculator itself.
 Create a new folder somewhere you can easily find it, like your Desktop. Name it something like ScoreApp.
@@ -47,6 +59,7 @@ Copy / move all of the files you just downloaded into that folder (check image f
 
 
 Step 3: Install the Helper Program (OPTIONAL)
+
 The app has one optional helper program it needs to export reports to Microsoft Word. We'll install it using a tool called pip that came with your Python installation.
 Open the command line tool (Command Prompt or Terminal) just like you did in Step 1.
 Navigate to your application folder. This is the trickiest part. You need to tell the command line where your ScoreApp folder is. You'll use the cd (Change Directory) command.
@@ -57,7 +70,8 @@ You should see some text as it downloads and installs the python-docx library. T
 
 
 
-Step 4: Run the Score Calculator! 🎉
+Step 4: Run the Score Calculator! 
+
 You've done all the hard work! Now you can run the application.
 
 Make sure you are still in your ScoreApp folder in the command line tool (Command Prompt or Terminal).
@@ -104,6 +118,7 @@ It shows each submission's Rank, Name, Final Score, and a breakdown of their raw
 At the bottom of the report, you can click 📄 Export to Word to save a beautifully formatted document of the results.
 
 Don't forget to save your whole competition! Use File > Save Competition As... to save a .json file that contains all your settings and submissions. You can open it again later using File > Load Competition....
+
 
 
 
