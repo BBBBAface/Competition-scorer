@@ -69,8 +69,7 @@ ALTERNATIVE: You can also just run "Competition Scoring.bat" to start the applic
 
 
 
-
-
+------------------------------------------------------
 
 
 How to Use the Application
@@ -111,4 +110,5 @@ At the bottom of the report, you can click 📄 Export to Word to save a beautif
 Saving Your Work
 
 Don't forget to save your whole competition! Use File > Save Competition As... to save a .json file that contains all your settings and submissions. You can open it again later using File > Load Competition....
+
 
