@@ -5,8 +5,6 @@ Easy Data Entry: Add or edit submissions in a simple form.
 
 Custom Scoring Rules: Define your own scoring categories, set custom weights, and even apply a "curve" to the scores.
 
-Advanced Calculations: Apply pre-calculation functions like "Square Root," "Z-Score," or "Rank Order" to scores before they are finalized.
-
 Save & Load: Save your entire competition (settings and all submissions) to a file and load it back up later.
 
 Generate Reports: Instantly generate a final leaderboard and see category winners.
@@ -18,8 +16,6 @@ Export to Word: Create a professional, formatted .docx report of the final resul
 
 
 
-
-Installation and First-Time Setup Guide 
 
 This guide will walk you through every single step to get the application running. No prior coding experience is needed! We'll go slow and explain everything as if you have nearly no computer literacy.
 
@@ -160,5 +156,6 @@ Images:
 <img width="1099" height="648" alt="image" src="https://github.com/user-attachments/assets/333620f5-44f0-468d-a687-b792ce3367f7" />
 
 <img width="517" height="474" alt="image" src="https://github.com/user-attachments/assets/77f2fc69-532d-4f6e-bd6f-f17f0e37137e" />
+
 
 
