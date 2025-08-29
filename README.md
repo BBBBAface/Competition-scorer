@@ -155,7 +155,10 @@ At the bottom of the report, you can click 📄 Export to Word to save a beautif
 Don't forget to save your whole competition! Use File > Save Competition As... to save a .json file that contains all your settings and submissions. You can open it again later using File > Load Competition....
 
 
+Images:
 
+<img width="1099" height="648" alt="image" src="https://github.com/user-attachments/assets/333620f5-44f0-468d-a687-b792ce3367f7" />
 
+<img width="517" height="474" alt="image" src="https://github.com/user-attachments/assets/77f2fc69-532d-4f6e-bd6f-f17f0e37137e" />
 
 
