@@ -1,7 +1,6 @@
 
 This is a simple application designed to help you manage and score any kind of competition, from a science fair to a bake-off. You can create categories, weigh them differently, and automatically calculate final scores for all your submissions.
 
-Features ✨
 Easy Data Entry: Add or edit submissions in a simple form.
 Custom Scoring Rules: Define your own scoring categories, set custom weights, and even apply a "curve" to the scores.
 Advanced Calculations: Apply pre-calculation functions like "Square Root," "Z-Score," or "Rank Order" to scores before they are finalized.
@@ -14,7 +13,7 @@ Export to Word: Create a professional, formatted .docx report of the final resul
 
 
 
-Installation and First-Time Setup Guide 🚀
+Installation and First-Time Setup Guide 
 This guide will walk you through every single step to get the application running. No prior coding experience is needed! We'll go slow and explain everything as if you have nearly no computer literacy.
 
 
@@ -105,6 +104,7 @@ It shows each submission's Rank, Name, Final Score, and a breakdown of their raw
 At the bottom of the report, you can click 📄 Export to Word to save a beautifully formatted document of the results.
 
 Don't forget to save your whole competition! Use File > Save Competition As... to save a .json file that contains all your settings and submissions. You can open it again later using File > Load Competition....
+
 
 
 
