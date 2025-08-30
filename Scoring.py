@@ -1,7 +1,7 @@
 import sys
 import datetime
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog, filedialog
+from tkinter import ttk, messagebox, simpledialog, filedialog, colorchooser
 import json
 import os
 import math
@@ -155,10 +155,12 @@ class SettingsWindow(tk.Toplevel):
         self.score_min_var = tk.StringVar(value=self.settings['score_min'])
         self.score_max_var = tk.StringVar(value=self.settings['score_max'])
         self.dark_mode_var = tk.BooleanVar(value=self.settings.get('dark_mode', False))
+        self.chart_type_var = tk.StringVar(value=self.settings.get('chart_type', 'Bar Graph'))
 
         self.category_names_vars = [tk.StringVar(value=name) for name in self.settings['category_names']]
         self.category_weights_vars = [tk.StringVar(value=weight) for weight in self.settings['category_weights']]
         self.category_calcs_vars = [tk.StringVar(value=calc) for calc in self.settings.get('category_calcs', ['None']*10)]
+        self.category_colors_vars = [tk.StringVar(value=color) for color in self.settings.get('category_colors', [])]
         
         # --- UI Creation ---
         self.frame = ttk.Frame(self, padding="15")
@@ -167,15 +169,16 @@ class SettingsWindow(tk.Toplevel):
         # --- General Settings Frame ---
         self.general_frame = ttk.LabelFrame(self.frame, text="General", padding="10")
         self.general_frame.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
+        self.general_frame.columnconfigure(1, weight=1)
 
         ttk.Label(self.general_frame, text="Competition Name:").grid(row=0, column=0, sticky="w")
         ttk.Entry(self.general_frame, textvariable=self.competition_name_var, width=30).grid(row=0, column=1, sticky="ew")
 
         ttk.Checkbutton(self.general_frame, text="Enable Score Curve", variable=self.enable_curve_var).grid(row=1, column=0, sticky="w", pady=5)
-        self.add_tooltip(self.general_frame, row=1, col=1, text="Scales all scores in a category so the top score becomes the max possible score.\nThis proportionally rewards entries that outperform others.")
+        self.add_tooltip(self.general_frame, row=1, col=2, text="Scales all scores in a category so the top score becomes the max possible score.\nThis proportionally rewards entries that outperform others.")
         
         ttk.Checkbutton(self.general_frame, text="Enable Custom Weights", variable=self.enable_weights_var, command=self.toggle_weight_entries).grid(row=2, column=0, sticky="w")
-        self.add_tooltip(self.general_frame, row=2, col=1, text="Allows setting a custom weight for each category's final score contribution.")
+        self.add_tooltip(self.general_frame, row=2, col=2, text="Allows setting a custom weight for each category's final score contribution.")
 
         ttk.Label(self.general_frame, text="Score Scale (Min/Max):").grid(row=3, column=0, sticky="w", pady=(10,0))
         scale_frame = ttk.Frame(self.general_frame)
@@ -183,6 +186,11 @@ class SettingsWindow(tk.Toplevel):
         ttk.Entry(scale_frame, textvariable=self.score_min_var, width=5).pack(side=tk.LEFT)
         ttk.Label(scale_frame, text=" to ").pack(side=tk.LEFT)
         ttk.Entry(scale_frame, textvariable=self.score_max_var, width=5).pack(side=tk.LEFT)
+
+        ttk.Label(self.general_frame, text="Report Chart Type:").grid(row=5, column=0, sticky="w", pady=(10,0))
+        chart_combo = ttk.Combobox(self.general_frame, textvariable=self.chart_type_var, values=["Bar Graph", "Pie Chart"], state="readonly")
+        chart_combo.grid(row=5, column=1, sticky="w", pady=(10,0))
+        self.add_tooltip(self.general_frame, row=5, col=2, text="Bar Graph: Compares all submissions.\nPie Chart: Shows a score visual for each entry.")
 
         # --- Categories Frame ---
         self.categories_outer_frame = ttk.LabelFrame(self.frame, text="Categories", padding="10")
@@ -192,7 +200,7 @@ class SettingsWindow(tk.Toplevel):
         ttk.Spinbox(self.categories_outer_frame, from_=1, to=10, textvariable=self.num_categories_var, width=5, command=self.rebuild_category_widgets).grid(row=0, column=1, sticky="w")
         
         self.category_frame = ttk.Frame(self.categories_outer_frame, padding=(0, 10, 0, 0))
-        self.category_frame.grid(row=1, column=0, columnspan=4, sticky="ew")
+        self.category_frame.grid(row=1, column=0, columnspan=6, sticky="ew")
 
         # --- Bottom Frame ---
         bottom_frame = ttk.Frame(self.frame, padding=(0, 10, 0, 0))
@@ -215,23 +223,35 @@ class SettingsWindow(tk.Toplevel):
 
     def add_tooltip(self, parent, row, col, text):
         info_label = ttk.Label(parent, text=" (?)", cursor="question_arrow")
-        info_label.grid(row=row, column=col, sticky="w")
+        info_label.grid(row=row, column=col, sticky="w", padx=2)
         ToolTip(info_label, text)
+
+    def _choose_color(self, index, swatch_label):
+        """Opens a color chooser and updates the variable and swatch."""
+        color_code = colorchooser.askcolor(title="Choose category color")
+        if color_code and color_code[1]:
+            self.category_colors_vars[index].set(color_code[1])
+            swatch_label.config(background=color_code[1])
 
     def rebuild_category_widgets(self):
         for widget in self.category_frame.winfo_children():
             widget.destroy()
 
         num = self.num_categories_var.get()
+        
+        # Ensure settings lists are long enough
+        default_colors = self.app.default_settings['category_colors']
         while len(self.category_names_vars) < num: self.category_names_vars.append(tk.StringVar(value=f"Category {len(self.category_names_vars)+1}"))
         while len(self.category_weights_vars) < num: self.category_weights_vars.append(tk.StringVar(value=str(round(100/num))))
         while len(self.category_calcs_vars) < num: self.category_calcs_vars.append(tk.StringVar(value='None'))
+        while len(self.category_colors_vars) < num: self.category_colors_vars.append(tk.StringVar(value=default_colors[len(self.category_colors_vars)]))
 
+        # --- Create Headers ---
         ttk.Label(self.category_frame, text="Category Name", font="-weight bold").grid(row=0, column=1, padx=5, pady=5)
         ttk.Label(self.category_frame, text="Weight (%)", font="-weight bold").grid(row=0, column=2, padx=5, pady=5)
-        
         calc_header = ttk.Label(self.category_frame, text="Pre-Calculation", font="-weight bold")
         calc_header.grid(row=0, column=3, padx=5, pady=5)
+        ttk.Label(self.category_frame, text="Chart Color", font="-weight bold").grid(row=0, column=4, columnspan=2, padx=5, pady=5)
         
         tooltip_text = """Apply a function to scores before other calculations.
 
@@ -248,21 +268,29 @@ class SettingsWindow(tk.Toplevel):
 • Rank Order: Score is based on rank (1st, 2nd, 3rd) in category.
 • Diff from Average: Score becomes the raw score minus the average.
 • Pct of Top Score: Score is its percentage of the top raw score."""
-        self.add_tooltip(self.category_frame, row=0, col=4, text=tooltip_text)
+        self.add_tooltip(self.category_frame, row=0, col=6, text=tooltip_text)
 
         self.weight_entries = []
         calc_options = ["None", "Square Root", "Log10", "Square", "Invert (Max - x)", "Binary (Pass/Fail)",
                         "Z-Score", "Rank Order", "Diff from Average", "Pct of Top Score"]
         for i in range(num):
             ttk.Label(self.category_frame, text=f"Category {i+1}:").grid(row=i+1, column=0, sticky="w")
-            ttk.Entry(self.category_frame, textvariable=self.category_names_vars[i]).grid(row=i+1, column=1, padx=5, pady=2)
+            ttk.Entry(self.category_frame, textvariable=self.category_names_vars[i]).grid(row=i+1, column=1, padx=5, pady=2, sticky="ew")
+            
             weight_entry = ttk.Entry(self.category_frame, textvariable=self.category_weights_vars[i], width=10)
             weight_entry.grid(row=i+1, column=2, padx=5, pady=2)
             self.weight_entries.append(weight_entry)
             
             calc_combo = ttk.Combobox(self.category_frame, textvariable=self.category_calcs_vars[i], values=calc_options, state="readonly", width=18)
             calc_combo.grid(row=i+1, column=3, padx=5, pady=2)
-        
+
+            # Color Swatch & Button
+            color_swatch = tk.Label(self.category_frame, text="    ", background=self.category_colors_vars[i].get(), relief="sunken")
+            color_swatch.grid(row=i+1, column=4, padx=(5,2), pady=2, sticky="ew")
+            
+            color_button = ttk.Button(self.category_frame, text="Choose", command=lambda idx=i, swatch=color_swatch: self._choose_color(idx, swatch))
+            color_button.grid(row=i+1, column=5, padx=(0,5), pady=2)
+
         self.toggle_weight_entries()
         self.app.update_theme()
 
@@ -303,9 +331,11 @@ class SettingsWindow(tk.Toplevel):
             'score_min': self.score_min_var.get(),
             'score_max': self.score_max_var.get(),
             'dark_mode': self.dark_mode_var.get(),
+            'chart_type': self.chart_type_var.get(),
             'category_names': [var.get() or f"Category {i+1}" for i, var in enumerate(self.category_names_vars[:num_cat])],
             'category_weights': [var.get() or str(round(100/num_cat)) for i, var in enumerate(self.category_weights_vars[:num_cat])],
-            'category_calcs': [var.get() for var in self.category_calcs_vars[:num_cat]]
+            'category_calcs': [var.get() for var in self.category_calcs_vars[:num_cat]],
+            'category_colors': [var.get() for var in self.category_colors_vars[:num_cat]]
         }
         self.destroy()
 
@@ -319,10 +349,14 @@ class ScoreCalculatorApp:
 
         self.default_settings = {
             'competition_name': "New Competition", 'num_categories': 3,
-            'category_names': ["Combat", "Design", "Creativity"], 'category_weights': ["60", "20", "20"],
+            'category_names': ["Combat", "Design", "Creativity"], 
+            'category_weights': ["60", "20", "20"],
             'category_calcs': ["None", "None", "None"],
             'enable_curve': True, 'enable_weights': True,
-            'score_min': "1", 'score_max': "100", 'dark_mode': False
+            'score_min': "1", 'score_max': "100", 'dark_mode': False,
+            'chart_type': 'Bar Graph',
+            'category_colors': ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
+                                '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
         }
         self.settings = self.default_settings.copy()
         self.load_config()
@@ -341,6 +375,9 @@ class ScoreCalculatorApp:
         try:
             with open(self.CONFIG_FILE, 'r') as f:
                 config_data = json.load(f)
+                # Ensure all default keys are present after loading
+                for key, value in self.default_settings.items():
+                    config_data.setdefault(key, value)
                 self.settings.update(config_data)
         except (FileNotFoundError, json.JSONDecodeError):
             # If file doesn't exist or is corrupt, just use defaults
@@ -380,10 +417,9 @@ class ScoreCalculatorApp:
         self.main_frame = ttk.Frame(self.root, padding="10")
         self.main_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Configure grid layout for the main frame
         self.main_frame.grid_rowconfigure(0, weight=1)
         self.main_frame.grid_columnconfigure(0, weight=1)
-        self.main_frame.grid_columnconfigure(1, weight=0) # Right frame doesn't expand horizontally
+        self.main_frame.grid_columnconfigure(1, weight=0)
 
         left_frame = ttk.Frame(self.main_frame)
         left_frame.grid(row=0, column=0, sticky='nsew', padx=(0, 10))
@@ -569,7 +605,6 @@ class ScoreCalculatorApp:
             try:
                 with open(filepath, 'r') as f:
                     data = json.load(f)
-                # Load settings from file but keep app defaults for any missing keys
                 temp_settings = self.default_settings.copy()
                 temp_settings.update(data['settings'])
                 self.settings = temp_settings
@@ -592,7 +627,6 @@ class ScoreCalculatorApp:
         if calc_type == "Invert (Max - x)": return max(0, max_val - score)
         if calc_type == "Binary (Pass/Fail)": return max_val if score > 0 else 0
         
-        # Relational calculations
         if calc_type == "Z-Score":
             return ((score - stats['avg']) / stats['std']) * 10 + 50 if stats['std'] > 0 else 50
         if calc_type == "Rank Order":
@@ -612,7 +646,6 @@ class ScoreCalculatorApp:
         num_cat = self.settings['num_categories']
         calcs = self.settings.get('category_calcs', ['None'] * num_cat)
         
-        # --- First Pass: Validate and gather raw scores ---
         raw_scores_by_cat = [[] for _ in range(num_cat)]
         validated_subs = []
         for sub in self.submissions:
@@ -625,7 +658,6 @@ class ScoreCalculatorApp:
                 messagebox.showerror("Score Error", f"Submission '{sub['name']}' has an invalid score. Please correct it.", parent=self.root)
                 return
 
-        # --- Second Pass: Calculate statistics for relational pre-calcs ---
         category_stats = []
         for i in range(num_cat):
             scores = raw_scores_by_cat[i]
@@ -639,14 +671,12 @@ class ScoreCalculatorApp:
             stats['max'] = max(scores) if scores else 0
             stats['min'] = min(scores) if scores else 0
             
-            # Create a rank map for Rank Order calculation
             sorted_subs = sorted(validated_subs, key=lambda s: s['raw_scores'][i], reverse=True)
             max_rank_score = len(sorted_subs)
             stats['rank_map'] = {sub['name']: max_rank_score - rank for rank, sub in enumerate(sorted_subs)}
             
             category_stats.append(stats)
             
-        # --- Third Pass: Apply pre-calcs and final scoring ---
         processed_subs = []
         for sub in validated_subs:
             pre_calc_scores = [self._apply_pre_calc(s, calcs[i], category_stats[i], sub['name']) for i, s in enumerate(sub['raw_scores'])]
@@ -671,20 +701,13 @@ class ScoreCalculatorApp:
                     max_s = max_pre_calc_scores[i]
                     min_s = min_pre_calc_scores[i]
 
-                    # Proportional scaling is logical only for positive score ranges.
                     if max_s > 0:
-                        # Calculate a scaling factor to make the top score equal to the max score.
                         scaling_factor = score_max_value / max_s
-                        # Apply this factor to the current score.
                         curved_score = score * scaling_factor
-                    # For ranges that are entirely negative or zero, fall back to min-max normalization
-                    # to map the range to 0-100, which is more intuitive for those cases.
                     else:
                         if max_s == min_s:
-                            # All scores in the category are identical (e.g., all 0 or all -10).
                             curved_score = score_max_value
                         else:
-                            # Normalize score from its min/max range to a 0-100 scale.
                             curved_score = score_max_value * (score - min_s) / (max_s - min_s)
                     
                     final_category_scores.append(curved_score)
@@ -712,7 +735,6 @@ class ScoreCalculatorApp:
         is_curved = self.settings.get('enable_curve', False)
         report_str = f"--- {self.settings['competition_name'].upper()} FINAL LEADERBOARD ---\n\n"
         
-        # Adjust header based on whether curving is enabled
         if is_curved:
             cat_headers = [f"{name[:10]}(R/C)" for name in self.settings['category_names']]
         else:
@@ -724,7 +746,6 @@ class ScoreCalculatorApp:
         
         for i, res in enumerate(sorted_results, 1):
             scores_str_parts = []
-            # Adjust score display based on whether curving is enabled
             for cat_idx in range(len(res['raw_scores'])):
                 raw_score = res['raw_scores'][cat_idx]
                 final_cat_score = res['final_category_scores'][cat_idx]
@@ -763,7 +784,8 @@ class ScoreCalculatorApp:
             return
             
         is_curved = self.settings.get('enable_curve', False)
-        score_label = "Curved Score" if is_curved else "Score"
+        chart_type = self.settings.get('chart_type', 'Bar Graph')
+        category_colors = self.settings.get('category_colors', self.default_settings['category_colors'])
 
         try:
             doc = Document()
@@ -784,49 +806,51 @@ class ScoreCalculatorApp:
             p = doc.add_paragraph("The final scores were calculated based on the following settings:", style='List Bullet')
             if is_curved:
                 doc.add_paragraph('Score Curving: Enabled', style='List Bullet 2')
-                # Add an indented note explaining what score curving is with an example
                 p = doc.add_paragraph(style='List Bullet 3')
                 p.add_run("This feature scales scores within each category so the top score becomes the maximum possible score, proportionally increasing all other scores in that category.").italic = True
                 p = doc.add_paragraph(style='List Bullet 3')
                 p.add_run("Example: In a 1-100 scale, if the highest raw score was 80, it becomes 100. A raw score of 60 would then be scaled up to 75.").italic = True
             doc.add_paragraph(f"Custom Weights: {'Enabled' if self.settings['enable_weights'] else 'Disabled'}", style='List Bullet 2')
             
-            # --- Chart Section ---
-            doc.add_heading('Score Visualization', level=1)
-            sub_names = [res['name'] for res in sorted_results]
-            cat_names = self.settings['category_names']
-            scores_by_cat = {name: [res['final_category_scores'][i] for res in sorted_results] for i, name in enumerate(cat_names)}
-
-            chart_path = 'scores_chart.png'
-            x = np.arange(len(sub_names))
-            width = 0.8 / len(cat_names)
-            multiplier = 0
-            fig, ax = plt.subplots(figsize=(max(8, len(sub_names) * 1.2), 6), layout='constrained')
-
-            for attribute, measurement in scores_by_cat.items():
-                offset = width * multiplier
-                rects = ax.bar(x + offset - (width * (len(cat_names)-1) / 2), measurement, width, label=attribute)
-                ax.bar_label(rects, padding=3, fmt='%.1f', fontsize=8)
-                multiplier += 1
-            
-            ax.set_ylabel(score_label, fontweight='bold')
-            ax.set_title('Submission Scores by Category', fontsize=14, fontweight='bold')
-            ax.set_xticks(x, sub_names, rotation=45, ha="right")
-            ax.legend(loc='upper right', ncols=1)
-            ax.grid(axis='y', linestyle='--', alpha=0.7)
-            ax.set_ylim(0, float(self.settings['score_max']) * 1.1)
-            
-            plt.savefig(chart_path, dpi=300)
-            plt.close(fig)
-            
-            doc.add_paragraph(f"The following chart displays the final {score_label.lower()}s for each submission across all categories.")
-            doc.add_picture(chart_path, width=Inches(6.5))
-            os.remove(chart_path)
+            # --- Chart Section (if Bar Graph) ---
+            if chart_type == 'Bar Graph':
+                doc.add_heading('Score Visualization', level=1)
+                chart_path = 'scores_chart.png'
+                fig, ax = plt.subplots(figsize=(10, 6), layout='constrained')
+                
+                score_label = "Curved Score" if is_curved else "Score"
+                sub_names = [res['name'] for res in sorted_results]
+                cat_names = self.settings['category_names']
+                scores_by_cat = {name: [res['final_category_scores'][i] for res in sorted_results] for i, name in enumerate(cat_names)}
+                x = np.arange(len(sub_names))
+                width = 0.8 / len(cat_names)
+                multiplier = 0
+                
+                for i, (attribute, measurement) in enumerate(scores_by_cat.items()):
+                    offset = width * multiplier
+                    rects = ax.bar(x + offset - (width * (len(cat_names)-1) / 2), measurement, width, label=attribute, color=category_colors[i])
+                    ax.bar_label(rects, padding=3, fmt='%.1f', fontsize=8)
+                    multiplier += 1
+                
+                ax.set_ylabel(score_label, fontweight='bold')
+                ax.set_title('Submission Scores by Category', fontsize=14, fontweight='bold')
+                ax.set_xticks(x, sub_names, rotation=45, ha="right")
+                ax.legend(loc='upper right', ncols=1)
+                ax.grid(axis='y', linestyle='--', alpha=0.7)
+                ax.set_ylim(0, float(self.settings['score_max']) * 1.1)
+                
+                plt.savefig(chart_path, dpi=300)
+                plt.close(fig)
+                
+                doc.add_paragraph("The following chart compares the final scores for each submission across all categories.")
+                doc.add_picture(chart_path, width=Inches(6.5))
+                os.remove(chart_path)
+                doc.add_page_break()
 
             # --- Final Rankings Table ---
-            doc.add_page_break()
             doc.add_heading('Final Rankings', level=1)
-            num_cols = 3 + self.settings['num_categories']
+            num_cat = self.settings['num_categories']
+            num_cols = 3 + num_cat + (1 if chart_type == 'Pie Chart' else 0)
             table = doc.add_table(rows=1, cols=num_cols)
             table.style = 'Table Grid'
             table.autofit = False
@@ -836,13 +860,19 @@ class ScoreCalculatorApp:
                 cat_headers = [f"{name} (Raw/Curved)" for name in self.settings['category_names']]
             else:
                 cat_headers = self.settings['category_names']
-            headers = ['Rank', 'Submission Name', 'Final Score'] + cat_headers
             
+            headers = ['Rank', 'Submission Name', 'Final Score'] 
+            if chart_type == 'Pie Chart':
+                headers.append("Score Visual")
+            headers += cat_headers
+
             for i, header_text in enumerate(headers):
                 p = hdr_cells[i].paragraphs[0]
                 p.add_run(header_text).bold = True
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             
+            # Loop through results to populate table
+            max_possible_score = float(self.settings.get('score_max', 100))
             for i, res in enumerate(sorted_results, 1):
                 row_cells = table.add_row().cells
                 if i % 2 == 0:
@@ -851,24 +881,57 @@ class ScoreCalculatorApp:
                         shading_elm.set(qn('w:fill'), 'E7E6E6')
                         cell._tc.get_or_add_tcPr().append(shading_elm)
 
-                row_cells[0].text, row_cells[0].paragraphs[0].alignment = str(i), WD_ALIGN_PARAGRAPH.CENTER
-                row_cells[1].text = res['name']
-                row_cells[2].text, row_cells[2].paragraphs[0].alignment = f"{res['final_score']:.2f}", WD_ALIGN_PARAGRAPH.CENTER
-                for j in range(self.settings['num_categories']):
+                # Standard columns
+                col_idx = 0
+                row_cells[col_idx].text, row_cells[col_idx].paragraphs[0].alignment = str(i), WD_ALIGN_PARAGRAPH.CENTER
+                col_idx += 1
+                row_cells[col_idx].text = res['name']
+                col_idx += 1
+                row_cells[col_idx].text, row_cells[col_idx].paragraphs[0].alignment = f"{res['final_score']:.2f}", WD_ALIGN_PARAGRAPH.CENTER
+                col_idx += 1
+
+                # Pie Chart column
+                if chart_type == 'Pie Chart':
+                    chart_path = f"temp_pie_{i}.png"
+                    fig, ax = plt.subplots(figsize=(1, 1))
+                    
+                    score = res['final_score']
+                    # Ensure score is not negative for visualization
+                    achieved_score = max(0, score)
+                    missing_score = max(0, max_possible_score - achieved_score)
+                    
+                    pie_values = [achieved_score, missing_score]
+                    pie_colors = ['#2ca02c', '#000000']
+                    pie_labels = [f"{score:.1f}", None]
+                    
+                    ax.pie(pie_values, labels=pie_labels, colors=pie_colors, startangle=90, counterclock=False, 
+                           wedgeprops={'edgecolor': 'white'}, textprops={'fontsize': 14, 'color': 'white', 'fontweight': 'bold'})
+                    ax.axis('equal')
+                    
+                    plt.savefig(chart_path, dpi=150, transparent=True)
+                    plt.close(fig)
+                    
+                    # Add picture to cell
+                    cell = row_cells[col_idx]
+                    cell.text = '' # Clear cell text
+                    p = cell.paragraphs[0]
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    run = p.add_run()
+                    run.add_picture(chart_path, width=Inches(0.65))
+                    os.remove(chart_path)
+                    col_idx += 1
+
+                # Category score columns
+                for j in range(num_cat):
                     if is_curved:
                         cell_text = f"{res['raw_scores'][j]:.1f} / {res['final_category_scores'][j]:.1f}"
                     else:
                         cell_text = f"{res['final_category_scores'][j]:.1f}"
-                    row_cells[3+j].text = cell_text
-                    row_cells[3+j].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    row_cells[col_idx+j].text = cell_text
+                    row_cells[col_idx+j].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
             
-            table.columns[0].width = Inches(0.5)
-            table.columns[1].width = Inches(2.0)
-            table.columns[2].width = Inches(1.0)
-            for i in range(self.settings['num_categories']):
-                table.columns[3+i].width = Inches(1.0)
-
             # --- Category Winners Section ---
+            doc.add_page_break()
             doc.add_heading('Category Winners (Highest Raw Score)', level=1)
             for i, winner in enumerate(winners):
                 p = doc.add_paragraph(style='List Bullet')
