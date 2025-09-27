@@ -1,3 +1,5 @@
+# MODIFIED Scoring.py
+
 import sys
 import datetime
 import tkinter as tk
@@ -6,6 +8,10 @@ import json
 import os
 import math
 import statistics
+
+# --- ADDED IMPORT ---
+# Import the new tab class from the other file
+from strategy_game import StrategyGameTab
 
 # Gracefully handle the python-docx dependency
 try:
@@ -86,6 +92,12 @@ class ThemeManager:
             # LabelFrame specific style
             style.configure('TLabelFrame', background=bg, bordercolor=border_color)
             style.configure('TLabelFrame.Label', background=bg, foreground=fg)
+            
+            # --- ADDED FOR NOTEBOOK ---
+            style.configure('TNotebook', background=bg, bordercolor=border_color)
+            style.configure('TNotebook.Tab', background=light_bg, foreground=fg)
+            style.map('TNotebook.Tab', background=[('selected', select_bg), ('active', select_bg)])
+
 
             # Treeview specific style
             style.configure('Treeview', background=light_bg, fieldbackground=light_bg, foreground=fg)
@@ -110,6 +122,12 @@ class ThemeManager:
             style.configure('TScrollbar', background='#f0f0f0', troughcolor='#e1e1e1')
             style.configure('TLabelFrame', background='#f0f0f0')
             style.configure('TLabelFrame.Label', background='#f0f0f0', foreground='black')
+
+            # --- ADDED FOR NOTEBOOK ---
+            style.configure('TNotebook', background='#f0f0f0')
+            style.configure('TNotebook.Tab', background='#dcdcdc', foreground='black')
+            style.map('TNotebook.Tab', background=[('selected', '#f0f0f0'), ('active', '#e1e1e1')])
+
             style.configure('Treeview', background='white', fieldbackground='white', foreground='black')
             style.configure('Treeview.Heading', background='#f0f0f0', foreground='black')
             style.map('Treeview', background=[('selected', '#3399ff')])
@@ -219,7 +237,7 @@ class SettingsWindow(tk.Toplevel):
         ttk.Button(bottom_frame, text="Cancel", command=self.destroy).pack(side=tk.RIGHT)
 
         self.rebuild_category_widgets()
-        self.app.update_theme() # Apply initial theme
+        self.app.update_theme()
 
     def add_tooltip(self, parent, row, col, text):
         info_label = ttk.Label(parent, text=" (?)", cursor="question_arrow")
@@ -344,7 +362,7 @@ class ScoreCalculatorApp:
 
     def __init__(self, root):
         self.root = root
-        self.root.geometry("1100x600")
+        self.root.geometry("1200x1300") # 
         self.active_windows = [self.root]
 
         self.default_settings = {
@@ -414,17 +432,27 @@ class ScoreCalculatorApp:
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.save_config_on_exit)
 
-        self.main_frame = ttk.Frame(self.root, padding="10")
-        self.main_frame.pack(fill=tk.BOTH, expand=True)
+        # --- MODIFICATION: Use a Notebook for Tabs ---
+        notebook = ttk.Notebook(self.root)
+        notebook.pack(expand=True, fill='both', padx=5, pady=5)
         
-        self.main_frame.grid_rowconfigure(0, weight=1)
-        self.main_frame.grid_columnconfigure(0, weight=1)
-        self.main_frame.grid_columnconfigure(1, weight=0)
+        # Create the first tab for the original scoring UI
+        self.scoring_tab = ttk.Frame(notebook, padding="10")
+        notebook.add(self.scoring_tab, text='Competition Scoring')
+        
+        # Create and add the second tab from the imported file
+        self.strategy_tab = StrategyGameTab(notebook)
+        notebook.add(self.strategy_tab, text='4X Strategy Module')
 
-        left_frame = ttk.Frame(self.main_frame)
+        # --- MODIFICATION: All original widgets now go inside self.scoring_tab ---
+        self.scoring_tab.grid_rowconfigure(0, weight=1)
+        self.scoring_tab.grid_columnconfigure(0, weight=1)
+        self.scoring_tab.grid_columnconfigure(1, weight=0)
+
+        left_frame = ttk.Frame(self.scoring_tab)
         left_frame.grid(row=0, column=0, sticky='nsew', padx=(0, 10))
 
-        self.right_frame = ttk.LabelFrame(self.main_frame, text="Submission Details", padding="10")
+        self.right_frame = ttk.LabelFrame(self.scoring_tab, text="Submission Details", padding="10")
         self.right_frame.grid(row=0, column=1, sticky='ns')
 
         self.tree = ttk.Treeview(left_frame, show="headings", selectmode="browse")
@@ -434,7 +462,7 @@ class ScoreCalculatorApp:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.tree.bind("<<TreeviewSelect>>", self.on_submission_select)
         
-        bottom_buttons_frame = ttk.Frame(self.main_frame)
+        bottom_buttons_frame = ttk.Frame(self.scoring_tab)
         bottom_buttons_frame.grid(row=1, column=0, columnspan=2, sticky='ew', pady=(10,0))
         bottom_buttons_frame.grid_columnconfigure(0, weight=1)
         bottom_buttons_frame.grid_columnconfigure(1, weight=1)
